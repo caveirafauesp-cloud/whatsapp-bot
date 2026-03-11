@@ -18,4 +18,8 @@ COPY . .
 
 EXPOSE 3000
 
-CMD ["node", "index.js"]
+RUN mkdir -p /app/.wwebjs_auth && chmod 777 /app/.wwebjs_auth
+
+CMD ["node", "bot.js"]
+
+CMD ["node", "bot.js"]

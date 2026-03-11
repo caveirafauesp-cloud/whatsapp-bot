@@ -21,7 +21,8 @@ puppeteer: {
       '--disable-dev-shm-usage',
       '--disable-gpu',
       '--single-process',
-      '--no-zygote'
+      '--no-zygote',
+      '--user-data-dir=/tmp/chromium'
     ],
     protocolTimeout: 180000
   }
