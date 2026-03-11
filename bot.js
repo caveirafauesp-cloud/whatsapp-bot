@@ -1,7 +1,5 @@
 const { Client, MessageMedia, LocalAuth } = require('whatsapp-web.js');
 const fs = require('fs');
-const https = require('https');
-const http = require('http');
 const express = require('express');
 const QRCode = require('qrcode');
 
@@ -33,25 +31,34 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function baixarArquivo(url, destino) {
-  return new Promise((resolve, reject) => {
-    if (fs.existsSync(destino)) {
-      console.log(`✅ Já existe: ${destino}`);
-      return resolve();
+// Envia arquivo direto pela URL (sem baixar para memória)
+async function enviarPorUrl(contato, url, opcoes, tentativas = 3) {
+  for (let i = 0; i < tentativas; i++) {
+    try {
+      const media = await MessageMedia.fromUrl(url, { unsafeMime: true });
+      await client.sendMessage(contato, media, opcoes);
+      return;
+    } catch (e) {
+      console.log(`⚠️ Tentativa ${i + 1} falhou:`, e.message);
+      if (i < tentativas - 1) await delay(5000);
     }
-    console.log(`⬇️ Baixando: ${destino}`);
-    const protocolo = url.startsWith('https') ? https : http;
-    const file = fs.createWriteStream(destino);
-    protocolo.get(url, response => {
-      if (response.statusCode === 301 || response.statusCode === 302) {
-        file.close();
-        fs.unlinkSync(destino);
-        return baixarArquivo(response.headers.location, destino).then(resolve).catch(reject);
-      }
-      response.pipe(file);
-      file.on('finish', () => { file.close(); console.log(`✅ Baixado: ${destino}`); resolve(); });
-    }).on('error', err => { fs.unlink(destino, () => {}); reject(err); });
-  });
+  }
+  console.log(`❌ Falhou após ${tentativas} tentativas`);
+}
+
+// Envia arquivo local (PDFs do Git)
+async function enviarLocal(contato, caminho, opcoes, tentativas = 3) {
+  for (let i = 0; i < tentativas; i++) {
+    try {
+      const media = MessageMedia.fromFilePath(caminho);
+      await client.sendMessage(contato, media, opcoes);
+      return;
+    } catch (e) {
+      console.log(`⚠️ Tentativa ${i + 1} falhou:`, e.message);
+      if (i < tentativas - 1) await delay(5000);
+    }
+  }
+  console.log(`❌ Falhou após ${tentativas} tentativas`);
 }
 
 const CLOUDINARY = {
@@ -61,56 +68,10 @@ const CLOUDINARY = {
   licenciaturas: 'https://res.cloudinary.com/dkouzu5ho/image/upload/v1773239831/licenciaturas_zqtt5k.jpg'
 };
 
-const DESTINOS = {
-  video1:        '/app/.wwebjs_auth/video1.mp4',
-  video2:        '/app/.wwebjs_auth/video2.mp4',
-  audio:         '/app/.wwebjs_auth/audiok1.ogg',
-  licenciaturas: '/app/.wwebjs_auth/licenciaturas.jpg'
-};
-
 const PDF = {
   pos:    './posgraduacao.pdf',
   planos: './planos.pdf'
 };
-
-const arquivos = {};
-
-async function carregarArquivos() {
-  for (const [nome, url] of Object.entries(CLOUDINARY)) {
-    try {
-      await baixarArquivo(url, DESTINOS[nome]);
-      arquivos[nome] = MessageMedia.fromFilePath(DESTINOS[nome]);
-      console.log(`✅ Pronto: ${nome}`);
-    } catch (e) {
-      console.log(`❌ Erro ao carregar ${nome}:`, e.message);
-    }
-  }
-  for (const [nome, caminho] of Object.entries(PDF)) {
-    try {
-      if (fs.existsSync(caminho)) {
-        arquivos[nome] = MessageMedia.fromFilePath(caminho);
-        console.log(`✅ PDF carregado: ${caminho}`);
-      } else {
-        console.log(`⚠️ PDF não encontrado: ${caminho}`);
-      }
-    } catch (e) {
-      console.log(`❌ Erro PDF ${nome}:`, e.message);
-    }
-  }
-}
-
-async function enviarComRetry(contato, arquivo, opcoes, tentativas = 3) {
-  for (let i = 0; i < tentativas; i++) {
-    try {
-      await client.sendMessage(contato, arquivo, opcoes);
-      return;
-    } catch (e) {
-      console.log(`⚠️ Tentativa ${i + 1} falhou:`, e.message);
-      if (i < tentativas - 1) await delay(4000);
-    }
-  }
-  console.log(`❌ Falhou após ${tentativas} tentativas`);
-}
 
 let etapa = {};
 
@@ -147,9 +108,8 @@ client.on('qr', async qr => {
   console.log('QR gerado! Acesse /qr para escanear');
 });
 
-client.on('ready', async () => {
-  console.log("✅ Bot conectado!");
-  await carregarArquivos();
+client.on('ready', () => {
+  console.log("✅ Bot conectado e pronto!");
 });
 
 client.on('auth_failure', msg => console.error('❌ Falha de autenticação:', msg));
@@ -211,10 +171,10 @@ async function processarMensagem(message) {
       await client.sendMessage(contato, `📚 *Aproveitamento da sua formação*\n\n${info}`);
       await delay(3000);
 
-      if (arquivos.video1) await enviarComRetry(contato, arquivos.video1, { caption: "🎥 Assista esse vídeo explicativo" });
+      await enviarPorUrl(contato, CLOUDINARY.video1, { caption: "🎥 Assista esse vídeo explicativo" });
       await delay(5000);
 
-      if (arquivos.video2) await enviarComRetry(contato, arquivos.video2, { caption: "📌 Mais detalhes sobre a diplomação" });
+      await enviarPorUrl(contato, CLOUDINARY.video2, { caption: "📌 Mais detalhes sobre a diplomação" });
       await delay(3000);
 
       await client.sendMessage(contato,
@@ -222,15 +182,19 @@ async function processarMensagem(message) {
       );
       await delay(3000);
 
-      if (arquivos.licenciaturas) await enviarComRetry(contato, arquivos.licenciaturas, { caption: "📚 Licenciaturas disponíveis" });
+      await enviarPorUrl(contato, CLOUDINARY.licenciaturas, { caption: "📚 Licenciaturas disponíveis" });
       await delay(3000);
 
-      if (arquivos.pos) await enviarComRetry(contato, arquivos.pos, { caption: "📄 Opções de Pós-graduação" });
+      if (fs.existsSync(PDF.pos)) {
+        await enviarLocal(contato, PDF.pos, { caption: "📄 Opções de Pós-graduação" });
+      }
       await delay(3000);
 
-      if (arquivos.planos) await enviarComRetry(contato, arquivos.planos, {
-        caption: "💰 Planos e valores\n\n🔥 *PLANOS EM PROMOÇÃO*\nPlanos 4 e 7 - estão em promoção até 31MAR26"
-      });
+      if (fs.existsSync(PDF.planos)) {
+        await enviarLocal(contato, PDF.planos, {
+          caption: "💰 Planos e valores\n\n🔥 *PLANOS EM PROMOÇÃO*\nPlanos 4 e 7 - estão em promoção até 31MAR26"
+        });
+      }
       await delay(2000);
 
       await client.sendMessage(contato,
@@ -241,7 +205,7 @@ async function processarMensagem(message) {
       await client.sendMessage(contato, `🎧 Escuta esse áudio rápido antes de entrar no grupo 👇`);
       await delay(2000);
 
-      if (arquivos.audio) await enviarComRetry(contato, arquivos.audio, { sendAudioAsVoice: true });
+      await enviarPorUrl(contato, CLOUDINARY.audio, { sendAudioAsVoice: true });
       await delay(3000);
 
       await client.sendMessage(contato,
