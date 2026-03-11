@@ -12,7 +12,7 @@ const client = new Client({
     clientId: "bot-fauesp",
     dataPath: "/app/.wwebjs_auth"
   }),
-puppeteer: {
+  puppeteer: {
     headless: true,
     executablePath: '/usr/bin/chromium',
     args: [
@@ -30,6 +30,19 @@ puppeteer: {
 
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function enviarComRetry(contato, arquivo, opcoes, tentativas = 3) {
+  for (let i = 0; i < tentativas; i++) {
+    try {
+      await client.sendMessage(contato, arquivo, opcoes);
+      return;
+    } catch (e) {
+      console.log(`⚠️ Tentativa ${i + 1} falhou:`, e.message);
+      if (i < tentativas - 1) await delay(4000);
+    }
+  }
+  console.log(`❌ Falhou após ${tentativas} tentativas`);
 }
 
 let etapa = {};
@@ -181,17 +194,13 @@ async function processarMensagem(message) {
       await delay(3000);
 
       if (arquivos.video1) {
-        try {
-          await client.sendMessage(contato, arquivos.video1, { caption: "🎥 Assista esse vídeo explicativo" });
-        } catch (e) { console.log("Erro video1:", e.message); }
+        await enviarComRetry(contato, arquivos.video1, { caption: "🎥 Assista esse vídeo explicativo" });
       }
 
       await delay(5000);
 
       if (arquivos.video2) {
-        try {
-          await client.sendMessage(contato, arquivos.video2, { caption: "📌 Mais detalhes sobre a diplomação" });
-        } catch (e) { console.log("Erro video2:", e.message); }
+        await enviarComRetry(contato, arquivos.video2, { caption: "📌 Mais detalhes sobre a diplomação" });
       }
 
       await delay(3000);
@@ -201,27 +210,21 @@ async function processarMensagem(message) {
       await delay(3000);
 
       if (arquivos.licenciaturas) {
-        try {
-          await client.sendMessage(contato, arquivos.licenciaturas, { caption: "📚 Licenciaturas disponíveis" });
-        } catch (e) { console.log("Erro licenciaturas:", e.message); }
+        await enviarComRetry(contato, arquivos.licenciaturas, { caption: "📚 Licenciaturas disponíveis" });
       }
 
       await delay(3000);
 
       if (arquivos.pos) {
-        try {
-          await client.sendMessage(contato, arquivos.pos, { caption: "📄 Opções de Pós-graduação" });
-        } catch (e) { console.log("Erro pos:", e.message); }
+        await enviarComRetry(contato, arquivos.pos, { caption: "📄 Opções de Pós-graduação" });
       }
 
       await delay(3000);
 
       if (arquivos.planos) {
-        try {
-          await client.sendMessage(contato, arquivos.planos, {
-            caption: "💰 Planos e valores\n\n🔥 *PLANOS EM PROMOÇÃO*\nPlanos 4 e 7 - estão em promoção até 31MAR26"
-          });
-        } catch (e) { console.log("Erro planos:", e.message); }
+        await enviarComRetry(contato, arquivos.planos, {
+          caption: "💰 Planos e valores\n\n🔥 *PLANOS EM PROMOÇÃO*\nPlanos 4 e 7 - estão em promoção até 31MAR26"
+        });
       }
 
       await delay(2000);
@@ -233,9 +236,7 @@ async function processarMensagem(message) {
       await delay(2000);
 
       if (arquivos.audio) {
-        try {
-          await client.sendMessage(contato, arquivos.audio, { sendAudioAsVoice: true });
-        } catch (e) { console.log("Erro audio:", e.message); }
+        await enviarComRetry(contato, arquivos.audio, { sendAudioAsVoice: true });
       }
 
       await delay(3000);
