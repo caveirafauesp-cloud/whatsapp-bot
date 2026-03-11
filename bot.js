@@ -12,9 +12,9 @@ const client = new Client({
     clientId: "bot-fauesp",
     dataPath: "/app/.wwebjs_auth"
   }),
-  puppeteer: {
+puppeteer: {
     headless: true,
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || null,
+    executablePath: '/usr/bin/chromium',
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
