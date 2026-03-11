@@ -1,6 +1,7 @@
 const { Client, MessageMedia, LocalAuth } = require('whatsapp-web.js');
-const qrcode = require('qrcode-terminal');
 const fs = require('fs');
+const https = require('https');
+const http = require('http');
 const express = require('express');
 const QRCode = require('qrcode');
 
@@ -30,6 +31,72 @@ const client = new Client({
 
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function baixarArquivo(url, destino) {
+  return new Promise((resolve, reject) => {
+    if (fs.existsSync(destino)) {
+      console.log(`✅ Já existe: ${destino}`);
+      return resolve();
+    }
+    console.log(`⬇️ Baixando: ${destino}`);
+    const protocolo = url.startsWith('https') ? https : http;
+    const file = fs.createWriteStream(destino);
+    protocolo.get(url, response => {
+      if (response.statusCode === 301 || response.statusCode === 302) {
+        file.close();
+        fs.unlinkSync(destino);
+        return baixarArquivo(response.headers.location, destino).then(resolve).catch(reject);
+      }
+      response.pipe(file);
+      file.on('finish', () => { file.close(); console.log(`✅ Baixado: ${destino}`); resolve(); });
+    }).on('error', err => { fs.unlink(destino, () => {}); reject(err); });
+  });
+}
+
+const CLOUDINARY = {
+  video1:        'https://res.cloudinary.com/dkouzu5ho/video/upload/v1773239831/video1_vx1msc.mp4',
+  video2:        'https://res.cloudinary.com/dkouzu5ho/video/upload/v1773239831/video2_nyxew7.mp4',
+  audio:         'https://res.cloudinary.com/dkouzu5ho/video/upload/v1773239830/audiok1_hh2sm6.ogg',
+  licenciaturas: 'https://res.cloudinary.com/dkouzu5ho/image/upload/v1773239831/licenciaturas_zqtt5k.jpg'
+};
+
+const DESTINOS = {
+  video1:        '/app/.wwebjs_auth/video1.mp4',
+  video2:        '/app/.wwebjs_auth/video2.mp4',
+  audio:         '/app/.wwebjs_auth/audiok1.ogg',
+  licenciaturas: '/app/.wwebjs_auth/licenciaturas.jpg'
+};
+
+const PDF = {
+  pos:    './posgraduacao.pdf',
+  planos: './planos.pdf'
+};
+
+const arquivos = {};
+
+async function carregarArquivos() {
+  for (const [nome, url] of Object.entries(CLOUDINARY)) {
+    try {
+      await baixarArquivo(url, DESTINOS[nome]);
+      arquivos[nome] = MessageMedia.fromFilePath(DESTINOS[nome]);
+      console.log(`✅ Pronto: ${nome}`);
+    } catch (e) {
+      console.log(`❌ Erro ao carregar ${nome}:`, e.message);
+    }
+  }
+  for (const [nome, caminho] of Object.entries(PDF)) {
+    try {
+      if (fs.existsSync(caminho)) {
+        arquivos[nome] = MessageMedia.fromFilePath(caminho);
+        console.log(`✅ PDF carregado: ${caminho}`);
+      } else {
+        console.log(`⚠️ PDF não encontrado: ${caminho}`);
+      }
+    } catch (e) {
+      console.log(`❌ Erro PDF ${nome}:`, e.message);
+    }
+  }
 }
 
 async function enviarComRetry(contato, arquivo, opcoes, tentativas = 3) {
@@ -68,67 +135,25 @@ const aproveitamento = {
 };
 
 const siglas = {
-  "al": "alagoas",
-  "sp": "são paulo",
-  "ba": "bahia",
-  "ce": "ceará",
-  "es": "espírito santo",
-  "ma": "maranhão",
-  "mt": "mato grosso",
-  "ms": "mato grosso do sul",
-  "mg": "minas gerais",
-  "pa": "pará",
-  "pb": "paraíba",
-  "pr": "paraná",
-  "pe": "pernambuco",
-  "se": "sergipe",
-  "rn": "rio grande do norte",
-  "rs": "rio grande do sul",
-  "to": "tocantins"
+  "al": "alagoas", "sp": "são paulo", "ba": "bahia", "ce": "ceará",
+  "es": "espírito santo", "ma": "maranhão", "mt": "mato grosso",
+  "ms": "mato grosso do sul", "mg": "minas gerais", "pa": "pará",
+  "pb": "paraíba", "pr": "paraná", "pe": "pernambuco", "se": "sergipe",
+  "rn": "rio grande do norte", "rs": "rio grande do sul", "to": "tocantins"
 };
-
-const arquivos = {};
-const listaArquivos = {
-  video1: './video1.mp4',
-  video2: './video2.mp4',
-  licenciaturas: './licenciaturas.jpeg',
-  pos: './posgraduacao.pdf',
-  planos: './planos.pdf',
-  audio: './audiok1.ogg'
-};
-
-function carregarArquivos() {
-  for (const [nome, caminho] of Object.entries(listaArquivos)) {
-    try {
-      if (fs.existsSync(caminho)) {
-        arquivos[nome] = MessageMedia.fromFilePath(caminho);
-        console.log(`✅ Arquivo carregado: ${caminho}`);
-      } else {
-        console.log(`⚠️ Arquivo não encontrado: ${caminho}`);
-      }
-    } catch (erro) {
-      console.log(`❌ Erro ao carregar ${caminho}:`, erro.message);
-    }
-  }
-}
 
 client.on('qr', async qr => {
   qrAtual = qr;
   console.log('QR gerado! Acesse /qr para escanear');
 });
 
-client.on('ready', () => {
+client.on('ready', async () => {
   console.log("✅ Bot conectado!");
-  carregarArquivos();
+  await carregarArquivos();
 });
 
-client.on('auth_failure', msg => {
-  console.error('❌ Falha de autenticação:', msg);
-});
-
-client.on('disconnected', reason => {
-  console.log('⚠️ Bot desconectado:', reason);
-});
+client.on('auth_failure', msg => console.error('❌ Falha de autenticação:', msg));
+client.on('disconnected', reason => console.log('⚠️ Bot desconectado:', reason));
 
 async function processarMensagem(message) {
   try {
@@ -153,17 +178,11 @@ async function processarMensagem(message) {
       let estadoDetectado = null;
 
       for (let estado in aproveitamento) {
-        if (msg.includes(estado)) {
-          estadoDetectado = estado;
-          break;
-        }
+        if (msg.includes(estado)) { estadoDetectado = estado; break; }
       }
 
-      if (!estadoDetectado) {
-        const msgLimpa = msg.trim();
-        if (siglas[msgLimpa]) {
-          estadoDetectado = siglas[msgLimpa];
-        }
+      if (!estadoDetectado && siglas[msg]) {
+        estadoDetectado = siglas[msg];
       }
 
       if (!estadoDetectado) {
@@ -177,8 +196,7 @@ async function processarMensagem(message) {
       }
 
       etapa[contato] = "finalizado";
-
-      let info = aproveitamento[estadoDetectado];
+      const info = aproveitamento[estadoDetectado];
 
       await message.reply(
         `Sensacional, Estado do *${estadoDetectado.toUpperCase()}* 🇧🇷\n\n` +
@@ -193,53 +211,39 @@ async function processarMensagem(message) {
       await client.sendMessage(contato, `📚 *Aproveitamento da sua formação*\n\n${info}`);
       await delay(3000);
 
-      if (arquivos.video1) {
-        await enviarComRetry(contato, arquivos.video1, { caption: "🎥 Assista esse vídeo explicativo" });
-      }
-
+      if (arquivos.video1) await enviarComRetry(contato, arquivos.video1, { caption: "🎥 Assista esse vídeo explicativo" });
       await delay(5000);
 
-      if (arquivos.video2) {
-        await enviarComRetry(contato, arquivos.video2, { caption: "📌 Mais detalhes sobre a diplomação" });
-      }
-
+      if (arquivos.video2) await enviarComRetry(contato, arquivos.video2, { caption: "📌 Mais detalhes sobre a diplomação" });
       await delay(3000);
+
       await client.sendMessage(contato,
         `🚨🚨🚨\nAlém da Diplomação em Gestão Pública a FAUESP também oferece:\n\n• 15 Licenciaturas\n• Bacharel em Educação Física\n• 93 Pós-graduações`
       );
       await delay(3000);
 
-      if (arquivos.licenciaturas) {
-        await enviarComRetry(contato, arquivos.licenciaturas, { caption: "📚 Licenciaturas disponíveis" });
-      }
-
+      if (arquivos.licenciaturas) await enviarComRetry(contato, arquivos.licenciaturas, { caption: "📚 Licenciaturas disponíveis" });
       await delay(3000);
 
-      if (arquivos.pos) {
-        await enviarComRetry(contato, arquivos.pos, { caption: "📄 Opções de Pós-graduação" });
-      }
-
+      if (arquivos.pos) await enviarComRetry(contato, arquivos.pos, { caption: "📄 Opções de Pós-graduação" });
       await delay(3000);
 
-      if (arquivos.planos) {
-        await enviarComRetry(contato, arquivos.planos, {
-          caption: "💰 Planos e valores\n\n🔥 *PLANOS EM PROMOÇÃO*\nPlanos 4 e 7 - estão em promoção até 31MAR26"
-        });
-      }
-
+      if (arquivos.planos) await enviarComRetry(contato, arquivos.planos, {
+        caption: "💰 Planos e valores\n\n🔥 *PLANOS EM PROMOÇÃO*\nPlanos 4 e 7 - estão em promoção até 31MAR26"
+      });
       await delay(2000);
+
       await client.sendMessage(contato,
         `Matrícula 👇\n\nhttps://forms.zohopublic.com/FAUESP/form/RequerimentodeMatrculaAdministradorNovo/formperma/3C_4ORYAJv1zrhKuU7Q6pnyTtQQRuyI3jswnQ5JFobs?num=13`
       );
       await delay(3000);
+
       await client.sendMessage(contato, `🎧 Escuta esse áudio rápido antes de entrar no grupo 👇`);
       await delay(2000);
 
-      if (arquivos.audio) {
-        await enviarComRetry(contato, arquivos.audio, { sendAudioAsVoice: true });
-      }
-
+      if (arquivos.audio) await enviarComRetry(contato, arquivos.audio, { sendAudioAsVoice: true });
       await delay(3000);
+
       await client.sendMessage(contato,
         `👮‍♂️ Grupo exclusivo de policiais:\n\nhttps://chat.whatsapp.com/KesR0ns7tPx8EdDtz9I8rK?mode=gi_t`
       );

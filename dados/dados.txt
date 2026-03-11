@@ -1,0 +1,4 @@
+cloudinary - uploads
+https://github.com/caveirafauesp-cloud/whatsapp-bot
+https://railway.com/project/4c8ee018-4968-457f-a284-ebc6cde8a9c3/service/1584b99e-a612-4c8c-bf4b-7796de3024ab?environmentId=30d7c16d-3bd7-4d8a-8d58-285e5ed975ae
+https://whatsapp-bot-production-959e.up.railway.app/qr
