@@ -43,6 +43,7 @@ function baixarBuffer(url) {
 }
 
 let etapa = {};
+const mensagensProcessadas = new Set();
 
 const aproveitamento = {
   "alagoas":            "✅ Dispensa Completa",
@@ -115,32 +116,38 @@ async function enviarTexto(jid, texto) {
 
 async function enviarImagem(jid, url, caption) {
   try {
-    const buffer = await baixarBuffer(url);
-    await sock.sendMessage(jid, { image: buffer, caption });
-    console.log(`✅ Imagem enviada`);
+    await sock.sendMessage(jid, {
+      image: { url },
+      caption
+    });
+    console.log("✅ Imagem enviada");
   } catch (e) {
-    console.log(`❌ Erro imagem:`, e.message);
+    console.log("❌ Erro imagem:", e.message);
   }
 }
 
 async function enviarVideo(jid, url, caption) {
   try {
-    console.log(`⬇️ Baixando vídeo...`);
-    const buffer = await baixarBuffer(url);
-    await sock.sendMessage(jid, { video: buffer, caption });
-    console.log(`✅ Vídeo enviado`);
+    await sock.sendMessage(jid, {
+      video: { url },
+      caption
+    });
+    console.log("✅ Vídeo enviado");
   } catch (e) {
-    console.log(`❌ Erro vídeo:`, e.message);
+    console.log("❌ Erro vídeo:", e.message);
   }
 }
 
 async function enviarAudio(jid, url) {
   try {
-    const buffer = await baixarBuffer(url);
-    await sock.sendMessage(jid, { audio: buffer, mimetype: 'audio/ogg; codecs=opus', ptt: true });
-    console.log(`✅ Áudio enviado`);
+    await sock.sendMessage(jid, {
+      audio: { url },
+      mimetype: 'audio/ogg; codecs=opus',
+      ptt: true
+    });
+    console.log("✅ Áudio enviado");
   } catch (e) {
-    console.log(`❌ Erro áudio:`, e.message);
+    console.log("❌ Erro áudio:", e.message);
   }
 }
 
@@ -233,7 +240,19 @@ async function processarMensagem(jid, texto) {
     );
   }
 }
-
+function extrairTexto(msg) {
+  const m = msg.message;
+  return (
+    m?.conversation ||
+    m?.extendedTextMessage?.text ||
+    m?.imageMessage?.caption ||
+    m?.videoMessage?.caption ||
+    m?.buttonsResponseMessage?.selectedButtonId ||
+    m?.listResponseMessage?.title ||
+    m?.templateButtonReplyMessage?.selectedId ||
+    ""
+  );
+}
 async function conectar() {
   const { state, saveCreds } = await useMultiFileAuthState('/app/.wwebjs_auth/baileys');
   const { version } = await fetchLatestBaileysVersion();
@@ -278,28 +297,36 @@ async function conectar() {
     }
   });
 
-  sock.ev.on('messages.upsert', async ({ messages, type }) => {
-    if (type !== 'notify') return;
+sock.ev.on('messages.upsert', async ({ messages, type }) => {
+  if (type !== 'notify') return;
 
-    for (const msg of messages) {
-      try {
-        if (msg.key.fromMe) continue;
-        if (msg.key.remoteJid.includes('@g.us')) continue;
-        if (msg.key.remoteJid === 'status@broadcast') continue;
+  for (const msg of messages) {
+    try {
+      if (!msg.message) continue;
+        
+    if (mensagensProcessadas.has(msg.key.id)) continue;
 
-        const jid = msg.key.remoteJid;
-        const texto = msg.message?.conversation
-          || msg.message?.extendedTextMessage?.text
-          || '';
+mensagensProcessadas.add(msg.key.id);
 
-        if (!texto) continue;
+    if (mensagensProcessadas.size > 5000) {
+  mensagensProcessadas.clear();
+}
+      if (msg.key.fromMe) continue;
+      if (msg.key.remoteJid.includes('@g.us')) continue;
+      if (msg.key.remoteJid === 'status@broadcast') continue;
 
-        await processarMensagem(jid, texto);
-      } catch (e) {
-        console.error('❌ Erro ao processar mensagem:', e.message);
-      }
+      const jid = msg.key.remoteJid;
+      const texto = extrairTexto(msg);
+
+      if (!texto) continue;
+
+      await processarMensagem(jid, texto);
+
+    } catch (e) {
+      console.error('❌ Erro ao processar mensagem:', e.message);
     }
-  });
+  }
+});
 }
 
 app.get('/qr', async (req, res) => {
@@ -319,7 +346,18 @@ app.get('/qr', async (req, res) => {
     </body></html>
   `);
 });
+app.get('/logout', async (req, res) => {
+  try {
+    await sock.logout();
+    fs.rmSync('/app/.wwebjs_auth/baileys', { recursive: true, force: true });
 
+    res.send("✅ WhatsApp desconectado com sucesso.");
+    console.log("⚠️ WhatsApp desconectado manualmente");
+
+  } catch (e) {
+    res.send("Erro ao desconectar: " + e.message);
+  }
+});
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🌐 Servidor rodando na porta ${PORT}`));
 
