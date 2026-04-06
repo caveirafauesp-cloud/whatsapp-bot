@@ -221,7 +221,7 @@ async function processarMensagem(jid, texto) {
     await enviarPDF(jid, PDF.pos, "📄 Opções de Pós-graduação");
     await delay(3000);
 
-    await enviarPDF(jid, PDF.planos, "💰 Planos e valores\n\n🔥 *PLANOS EM PROMOÇÃO*\nPlanos 4 e 7 - estão em promoção até 31MAR26");
+    await enviarPDF(jid, PDF.planos, "💰 Planos e valores\n\n🔥 *PLANOS EM PROMOÇÃO* 🔥\nPlanos 4 e 7 - estão em promoção até 31MAR26");
     await delay(2000);
 
     await enviarTexto(jid,
