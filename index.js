@@ -225,7 +225,7 @@ async function processarMensagem(jid, texto) {
     await delay(2000);
 
     await enviarTexto(jid,
-      `Matrícula 👇\n\nhttps://forms.zohopublic.com/FAUESP/form/RequerimentodeMatrculaAdministradorNovo/formperma/3C_4ORYAJv1zrhKuU7Q6pnyTtQQRuyI3jswnQ5JFobs?num=13`
+      `Matrícula 👇\n\nhttps://www.fauespmilitar.com.br/requerimento_fauesp.html?consultor=Gustavo%20Passinato`
     );
     await delay(3000);
 
