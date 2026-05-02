@@ -221,9 +221,108 @@ async function processarMensagem(jid, texto) {
     await enviarPDF(jid, PDF.pos, "📄 Opções de Pós-graduação");
     await delay(3000);
 
-    await enviarPDF(jid, PDF.planos, "💰 Planos e valores\n\n🔥 *PLANOS EM PROMOÇÃO* 🔥\nPlanos 4 e 7 - estão em promoção até 31MAR26");
-    await delay(2000);
+await enviarTexto(jid, `🚨🚨🚨
+*FAUESP 2026*
 
+*PLANOS DISPONÍVEIS*
+
+🚨🚨🚨
+-*Plano 1:* Gestão Pública + Pós Graduação
+
+*Matrícula: R$350,00*
+- 12x R$339,00 - no Cartão
+- 18x R$250,00 - no Cartão
+- 24x R$ 200,00 - no Cartão
+
+ou
+- 12x R$389,00 - no Boleto
+
+🚨🚨🚨
+-*Plano 2:* Somente Diplomação em Gestão Pública
+
+*Matrícula: R$350,00*
+- 12x R$299,00 - no Cartão
+- 18x R$220,00 - no Cartão
+- 24x R$ 176,00 - no Cartão
+
+ou
+- 06x R$698,00 - no Boleto
+
+🚨🚨🚨
+-*Plano 3:* Diplomação em Gestão Pública + Licenciatura R/4
+
+*Matrícula: R$350,00*
+- 12x R$399,00 - no Cartão
+- 18x R$295,00 - no Cartão
+- 24x R$ 235,00 - no Cartão
+
+ou
+- 12x R$ 449,00 - no Boleto
+
+🚨🚨🚨
+-*Plano 4:* Diplomação em Gestão Pública + Licenciatura R/4 + Pós-Graduação
+
+*Matrícula: R$350,00*
+- 12x R$449,00 - no Cartão
+- 18x R$ 330,00 - no Cartão
+- 24x R$ 265,00 - no Cartão
+
+ou
+- 12x R$499,00 - no Boleto
+
+🚨🚨🚨
+-*Plano 5:* Licenciatura R/4
+*Obs:* Disponível somente para quem já possui graduação
+
+*Matrícula: R$350,00*
+- 12x R$249,00 - no Cartão
+- 18x R$185,00 - no Cartão
+- 24x R$ 148,00 - no Cartão
+
+ou
+- 12x R$299,00 - no Boleto
+
+🚨🚨🚨
+-*Plano 6:* 03 Pós-graduações + 03 Cursos de extensão
+
+*Matrícula: R$350,00*
+- 12x R$199,00 - no Cartão
+- 18x R$148,00 - no Cartão
+- 24x R$ 117,00 - no Cartão
+
+ou
+- 12x R$249,00 - no Boleto
+
+🚨🚨🚨
+-*Plano 7:* Plano Especial Mike
+
+*Matrícula: R$350,00*
+- 12x R$599,00 - no Cartão
+- 18x R$440,00 - no Cartão
+- 24x R$ 352,00 - no Cartão
+
+ou
+- 12x R$649,00 - no Boleto
+
+🚨🚨🚨
+-*Plano 8:* Licenciatura R/4 + Pós-Graduação
+
+*Matrícula: de R$350,00*
+- 12x R$299,00 - no Cartão
+- 18x R$220,00 - no Cartão
+- 24x R$ 177,00 - no Cartão
+
+ou
+- 12x R$349,00 - no Boleto
+
+🚨🚨🚨
+-*Plano 9:* 03 Cursos de Extensão
+
+*Matrícula: R$49,00*
+- 12x R$49,00 - no Cartão
+ou
+- 12x R$69,00 - no Boleto
+`);
     await enviarTexto(jid,
       `Matrícula 👇\n\nhttps://www.fauespmilitar.com.br/requerimento_fauesp.html?consultor=Gustavo%20Passinato`
     );
