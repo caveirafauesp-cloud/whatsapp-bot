@@ -233,10 +233,7 @@ if (usuariosFinalizados.has(jid)) return;
     );
     await delay(3000);
 
-    await enviarImagem(jid, URLS.licenciaturas, "📚 Licenciaturas disponíveis");
-    await delay(3000);
-
-    await enviarPDF(jid, PDF.pos, "📄 Opções de Pós-graduação");
+       await enviarPDF(jid, PDF.pos, "📄 Opções de Pós-graduação");
     await delay(3000);
 
 await enviarTexto(jid, `🚨🚨🚨
@@ -341,6 +338,84 @@ ou
 ou
 - 12x R$69,00 - no Boleto
 `);
+ await enviarImagem(jid, URLS.licenciaturas, "📚 Licenciaturas disponíveis");
+    await delay(3000);
+
+    await enviarTexto(jid, `🚨🚨🚨🚨
+*Planos que Contemplam a Formação em Educação Física (Licenciatura e Bacharel)*
+👇🏻👇🏻👇🏻👇🏻👇🏻
+
+🚨🚨🚨
+*Plano B1*
+- BACHAREL EM EDUCAÇÃO FÍSICA
+
+*Obs:* Em 12 meses, 100% online - SOMENTE aos Alunos (Policiais) que JA POSSUEM as Graduações de Gestão Pública + Licenciatura em Educação Fisica
+
+*Matrícula: R$350,00*
+- 12x R$399,00 - no Cartão
+- 18x R$295,00 - no Cartão
+- 24x R$ 235,00 - no Cartão
+
+ou
+- 12x R$449,00 - no Boleto
+
+🚨🚨🚨
+*Plano B2* - Especial Mike
+- GESTÃO PÚBLICA (Diplomação);
+- LICENCIATURA R/4 ED. FÍSICA;
+- BACHAREL EM EDUCAÇÃO FÍSICA.
+
+*Matrícula: R$350,00*
+- 12x R$649,00 - no Cartão
+- 18x R$479,00 - no Cartão
+- 24x R$ 382,00 - no Cartão
+
+ou
+- 12x R$699,00 - no Boleto
+
+🚨🚨🚨
+*Plano B3*
+- GESTÃO PÚBLICA (Diplomação);
+- LICENCIATURA R/4 ED. FÍSICA;
+- BACHAREL EM EDUCAÇÃO FÍSICA;
+- (+) 01 LICENCIATURA (a sua escolha, dentro das disponíveis).
+
+*Matrícula: R$350,00*
+- 12x R$749,00 - no Cartão
+- 18x R$555,00 - no Cartão
+- 24x R$ 443,00 - no Cartão
+
+ou
+- 12x R$799,00 - no Boleto
+
+🚨🚨🚨
+*Plano B4*
+- GESTÃO PÚBLICA (Diplomação);
+- LICENCIATURA R/4 ED. FÍSICA;
+- BACHAREL EM EDUCAÇÃO FÍSICA;
+- (+) 01 LICENCIATURA (a sua escolha, dentro das disponíveis);
+- ⁠03 Pós-graduações.
+
+*Matrícula: R$350,00*
+- 12x R$899,00 - no Cartão
+- 18x R$667,00 - no Cartão
+- 24x R$ 533,00 - no Cartão
+
+ou
+- 12x R$949,00 - no Boleto
+
+🚨🚨🚨
+*Plano B5*
+- LICENCIATURA R/4 ED. FÍSICA;
+- BACHAREL EM EDUCAÇÃO FÍSICA;
+
+*Matrícula: R$350,00*
+- 12x R$499,00 - no Cartão
+- 18x R$370,00 - no Cartão
+- 24x R$ 295,00 - no Cartão
+
+ou
+- 12x R$549,00`);
     await enviarTexto(jid,
       `Matrícula 👇\n\nhttps://www.fauespmilitar.com.br/requerimento_fauesp.html?consultor=Gustavo%20Passinato`
     );
