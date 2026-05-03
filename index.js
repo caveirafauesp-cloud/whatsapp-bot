@@ -44,7 +44,7 @@ function baixarBuffer(url) {
 
 let etapa = {};
 const mensagensProcessadas = new Set();
-
+let usuariosFinalizados = new Set();
 const aproveitamento = {
   "alagoas":            "✅ Dispensa Completa",
   "amazonas":           "3 disciplinas + Atividades em 3 meses",
@@ -180,8 +180,7 @@ async function processarMensagem(jid, texto) {
   }
 
   // 🚫 BLOQUEIO
-  if (etapa[jid] === "finalizado") return;
-
+if (usuariosFinalizados.has(jid)) return;
   // 🟢 PRIMEIRA INTERAÇÃO (mantém sua frase original)
   if (!etapa[jid]) {
     etapa[jid] = "estado";
@@ -356,6 +355,9 @@ ou
     await enviarTexto(jid,
       `👮‍♂️ Grupo exclusivo de policiais:\n\nhttps://chat.whatsapp.com/KesR0ns7tPx8EdDtz9I8rK?mode=gi_t`
     );
+    // 👇 FINAL DO FLUXO
+usuariosFinalizados.add(jid);
+etapa[jid] = "finalizado";
   }
 }
 function extrairTexto(msg) {
