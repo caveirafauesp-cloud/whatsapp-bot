@@ -6,7 +6,7 @@ const https = require('https');
 const http = require('http');
 const express = require('express');
 const QRCode = require('qrcode');
-
+const PALAVRAS_RESET = ["kaleu_caveira"];
 const app = express();
 let qrAtual = null;
 let sock = null;
@@ -164,13 +164,32 @@ async function enviarPDF(jid, caminho, caption) {
 
 async function processarMensagem(jid, texto) {
   const msg = texto.toLowerCase().trim();
+
   console.log(`[${jid}] Mensagem: "${msg}" | Etapa: ${etapa[jid]}`);
 
+  // 🔄 RESET (ANTES DE TUDO)
+  if (PALAVRAS_RESET.some(p => msg.includes(p))) {
+    delete etapa[jid];
+    usuariosFinalizados.delete(jid);
+
+    await enviarTexto(jid,
+      `🔄 Atendimento reiniciado!\n\nMe diz aí 👇\n\nVocê é de qual estado? 🇧🇷`
+    );
+
+    return;
+  }
+
+  // 🚫 BLOQUEIO
   if (etapa[jid] === "finalizado") return;
 
+  // 🟢 PRIMEIRA INTERAÇÃO (mantém sua frase original)
   if (!etapa[jid]) {
     etapa[jid] = "estado";
-    await enviarTexto(jid, `Falaaa Policial Militar 💀\n\nTudo na paz?\n\nVocê é de qual estado???`);
+
+    await enviarTexto(jid,
+      `Falaaa Policial Militar 💀\n\nTudo na paz?\n\nVocê é de qual estado???`
+    );
+
     return;
   }
 
